@@ -24,8 +24,7 @@ enum class OSInAppBrowserTarget(
     val openFailedText: String
 ) {
     EXTERNAL_BROWSER(5, "openInExternalBrowser", 8, "External browser"),
-    SYSTEM_BROWSER(6, "openInSystemBrowser", 10, "Custom Tabs"),
-    WEB_VIEW(7, "openInWebView", 11, "The WebView")
+    SYSTEM_BROWSER(6, "openInSystemBrowser", 10, "Custom Tabs")
 }
 
 private fun Int.formatErrorCode(): String {
