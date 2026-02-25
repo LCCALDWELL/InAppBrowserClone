@@ -24,10 +24,10 @@ class OSInAppBrowser: CordovaPlugin() {
     private var activeRouter: OSIABRouter<Boolean>? = null
     private val gson by lazy { Gson() }
 
-    override fun initialize(cordova: CordovaInterface) {
+/*    override fun initialize(cordova: CordovaInterface) {
         super.initialize(cordova)
         this.engine = OSIABEngine()
-    }
+    }*/
 
     override fun execute(
         action: String,
@@ -174,4 +174,109 @@ class OSInAppBrowser: CordovaPlugin() {
             )
         }
     }
+ /**
+     * Calls the close method of OSIABEngine to close the currently opened view
+     * @param callbackContext CallbackContext the method should return to
+     */
+    private fun close(callbackContext: CallbackContext) {
+        close { success ->
+            if (success) {
+                sendSuccess(callbackContext, OSIABEventType.SUCCESS)
+            } else {
+                sendError(callbackContext, OSInAppBrowserError.CloseFailed)
+            }
+        }
+    }
+
+    private fun close(callback: (Boolean) -> Unit) {
+        (activeRouter as? OSIABClosable)?.let { closableRouter ->
+            closableRouter.close { success ->
+                if (success) {
+                    activeRouter = null
+                }
+                callback(success)
+            }
+        } ?: callback(false)
+    }
+
+    /**
+     * Parses options that come in a JSObject to create a 'OSInAppBrowserSystemBrowserInputArguments' object.
+     * Then, it uses the newly created object to create a 'OSIABCustomTabsOptions' object.
+     * @param options The options to open the URL in the system browser (Custom Tabs) , in a JSON string.
+     */
+    private fun buildCustomTabsOptions(options: String): OSIABCustomTabsOptions {
+        return gson.fromJson(options, OSInAppBrowserSystemBrowserInputArguments::class.java).let {
+            OSIABCustomTabsOptions(
+                showTitle = it.android?.showTitle ?: true,
+                hideToolbarOnScroll = it.android?.hideToolbarOnScroll ?: false,
+                viewStyle = it.android?.viewStyle ?: OSIABViewStyle.FULL_SCREEN,
+                bottomSheetOptions = it.android?.bottomSheetOptions,
+                startAnimation = it.android?.startAnimation ?: OSIABAnimation.FADE_IN,
+                exitAnimation = it.android?.exitAnimation ?: OSIABAnimation.FADE_OUT
+            )
+        }
+    }
+
+    /**
+     * Parses options that come in JSON to a 'OSInAppBrowserWebViewInputArguments'.
+     * Then, it uses the newly created object to create a 'OSIABWebViewOptions' object.
+     * @param options The options to open the URL in a WebView, in a JSON string.
+     */
+    private fun buildWebViewOptions(options: String): OSIABWebViewOptions {
+        return gson.fromJson(options, OSInAppBrowserWebViewInputArguments::class.java).let {
+            OSIABWebViewOptions(
+                it.showURL ?: true,
+                it.showToolbar ?: true,
+                it.clearCache ?: true,
+                it.clearSessionCache ?: true,
+                it.mediaPlaybackRequiresUserAction ?: false,
+                it.closeButtonText ?: "Close",
+                it.toolbarPosition ?: OSIABToolbarPosition.TOP,
+                it.leftToRight ?: false,
+                it.showNavigationButtons ?: true,
+                it.android.allowZoom ?: true,
+                it.android.hardwareBack ?: true,
+                it.android.pauseMedia ?: true,
+                it.customWebViewUserAgent
+            )
+        }
+    }
+
+    /**
+     * Helper method to send a success result
+     * @param callbackContext CallbackContext to send the result to
+     * @param event Event to be sent (SUCCESS, BROWSER_PAGE_LOADED, or BROWSER_FINISHED)
+     */
+    private fun sendSuccess(callbackContext: CallbackContext, event: OSIABEventType, data: Any? = null) {
+        val dataToSend: Map<String, Any?> = mapOf("eventType" to event.value, "data" to data);
+        val jsonString = gson.toJson(dataToSend)
+
+        val pluginResult = PluginResult(PluginResult.Status.OK, jsonString)
+        pluginResult.keepCallback = true
+        callbackContext.sendPluginResult(pluginResult)
+    }
+
+    /**
+     * Helper method to send an error result
+     * @param callbackContext CallbackContext to send the result to
+     * @param error Error to be sent in the result
+     */
+    private fun sendError(callbackContext: CallbackContext, error: OSInAppBrowserError) {
+        val pluginResult = PluginResult(
+            PluginResult.Status.ERROR,
+            JSONObject().apply {
+                put("code", error.code)
+                put("message", error.message)
+            }
+        )
+        callbackContext.sendPluginResult(pluginResult)
+    }
+
+}
+
+enum class OSIABEventType(val value: Int) {
+    SUCCESS(1),
+    BROWSER_FINISHED(2),
+    BROWSER_PAGE_LOADED(3),
+    BROWSER_PAGE_NAVIGATION_COMPLETED(4)
 }
