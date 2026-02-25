@@ -137,7 +137,7 @@ class OSInAppBrowser: CordovaPlugin() {
      * @param callbackContext CallbackContext the method should return to
      */
     private fun close(callbackContext: CallbackContext) {
-        close { success ->
+        close { success: Boolean  ->
             if (success) {
                 sendSuccess(callbackContext, OSIABEventType.SUCCESS)
             } else {
@@ -148,7 +148,7 @@ class OSInAppBrowser: CordovaPlugin() {
 
     private fun close(callback: (Boolean) -> Unit) {
         (activeRouter as? OSIABClosable)?.let { closableRouter ->
-            closableRouter.close { success ->
+            closableRouter.close { success: Boolean ->
                 if (success) {
                     activeRouter = null
                 }
@@ -179,7 +179,7 @@ class OSInAppBrowser: CordovaPlugin() {
      * @param callbackContext CallbackContext the method should return to
      */
     private fun close(callbackContext: CallbackContext) {
-        close { success ->
+        close { success: Boolean  ->
             if (success) {
                 sendSuccess(callbackContext, OSIABEventType.SUCCESS)
             } else {
@@ -190,7 +190,7 @@ class OSInAppBrowser: CordovaPlugin() {
 
     private fun close(callback: (Boolean) -> Unit) {
         (activeRouter as? OSIABClosable)?.let { closableRouter ->
-            closableRouter.close { success ->
+            closableRouter.close { success: Boolean  ->
                 if (success) {
                     activeRouter = null
                 }
