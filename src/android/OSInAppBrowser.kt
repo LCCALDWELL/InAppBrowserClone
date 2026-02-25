@@ -217,30 +217,6 @@ class OSInAppBrowser: CordovaPlugin() {
         }
     }
 
-    /**
-     * Parses options that come in JSON to a 'OSInAppBrowserWebViewInputArguments'.
-     * Then, it uses the newly created object to create a 'OSIABWebViewOptions' object.
-     * @param options The options to open the URL in a WebView, in a JSON string.
-     */
-    private fun buildWebViewOptions(options: String): OSIABWebViewOptions {
-        return gson.fromJson(options, OSInAppBrowserWebViewInputArguments::class.java).let {
-            OSIABWebViewOptions(
-                it.showURL ?: true,
-                it.showToolbar ?: true,
-                it.clearCache ?: true,
-                it.clearSessionCache ?: true,
-                it.mediaPlaybackRequiresUserAction ?: false,
-                it.closeButtonText ?: "Close",
-                it.toolbarPosition ?: OSIABToolbarPosition.TOP,
-                it.leftToRight ?: false,
-                it.showNavigationButtons ?: true,
-                it.android.allowZoom ?: true,
-                it.android.hardwareBack ?: true,
-                it.android.pauseMedia ?: true,
-                it.customWebViewUserAgent
-            )
-        }
-    }
 
     /**
      * Helper method to send a success result
