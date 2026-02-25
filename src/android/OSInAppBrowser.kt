@@ -132,54 +132,12 @@ class OSInAppBrowser: CordovaPlugin() {
         }
     }
 
-    /**
-     * Calls the close method of OSIABEngine to close the currently opened view
-     * @param callbackContext CallbackContext the method should return to
-     */
-    private fun close(callbackContext: CallbackContext) {
-        close { success  ->
-            if (success) {
-                sendSuccess(callbackContext, OSIABEventType.SUCCESS)
-            } else {
-                sendError(callbackContext, OSInAppBrowserError.CloseFailed)
-            }
-        }
-    }
-
-    private fun close(callback: (Boolean) -> Unit) {
-        (activeRouter as? OSIABClosable)?.let { closableRouter ->
-            closableRouter.close { success: Boolean  ->
-                if (success) {
-                    activeRouter = null
-                }
-                callback(success)
-            }
-        } ?: callback(false)
-    }
-
-    /**
-     * Parses options that come in a JSObject to create a 'OSInAppBrowserSystemBrowserInputArguments' object.
-     * Then, it uses the newly created object to create a 'OSIABCustomTabsOptions' object.
-     * @param options The options to open the URL in the system browser (Custom Tabs) , in a JSON string.
-     */
-    private fun buildCustomTabsOptions(options: String): OSIABCustomTabsOptions {
-        return gson.fromJson(options, OSInAppBrowserSystemBrowserInputArguments::class.java).let {
-            OSIABCustomTabsOptions(
-                showTitle = it.android?.showTitle ?: true,
-                hideToolbarOnScroll = it.android?.hideToolbarOnScroll ?: false,
-                viewStyle = it.android?.viewStyle ?: OSIABViewStyle.FULL_SCREEN,
-                bottomSheetOptions = it.android?.bottomSheetOptions,
-                startAnimation = it.android?.startAnimation ?: OSIABAnimation.FADE_IN,
-                exitAnimation = it.android?.exitAnimation ?: OSIABAnimation.FADE_OUT
-            )
-        }
-    }
  /**
      * Calls the close method of OSIABEngine to close the currently opened view
      * @param callbackContext CallbackContext the method should return to
      */
     private fun close(callbackContext: CallbackContext) {
-        close { success ->
+        close { success: Boolean ->
             if (success) {
                 sendSuccess(callbackContext, OSIABEventType.SUCCESS)
             } else {
