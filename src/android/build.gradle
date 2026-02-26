@@ -10,14 +10,14 @@ buildscript {
 }
 
 repositories {
-    google()
-    mavenCentral()
+    // make app/libs visible to dependency resolution
+    flatDir { dirs 'app/libs' }
 }
 
 dependencies{
     //implementation("io.ionic.libs:ioninappbrowser-android:1.6.1@aar")
 
-    implementation files("$rootDir/ioninappbrowser-android-1.6.1-CleanPermissions.aar")
+    implementation(name: 'ioninappbrowser-android-1.6.1-CleanPermissions', ext: 'aar')implementation files("$rootDir/ioninappbrowser-android-1.6.1-CleanPermissions.aar")
 
     implementation("androidx.browser:browser:1.8.0")
     implementation("com.google.android.gms:play-services-auth:21.2.0")
