@@ -12,7 +12,7 @@ buildscript {
 
 repositories {
     // Local AARs delivered by the plugin
-    flatDir { dirs 'app/libs' }
+    flatDir { dirs 'libs' }
 
     // Also inherit standard repos from the root project in case this file is evaluated standalone
     google()
