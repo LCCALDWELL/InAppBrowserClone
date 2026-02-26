@@ -1,6 +1,6 @@
 import { require } from "cordova";
-import { BrowserCallbacks, PluginError, SystemBrowserOptions, WebViewOptions, CallbackEvent, CallbackEventType } from "./definitions";
-import { DefaultSystemBrowserOptions, DefaultWebViewOptions } from "./defaults";
+import { BrowserCallbacks, PluginError, SystemBrowserOptions, CallbackEvent, CallbackEventType } from "./definitions";
+import { DefaultSystemBrowserOptions } from "./defaults";
 var exec = require('cordova/exec')
 
 function trigger(type: CallbackEventType, success: () => void, data?: any, onbrowserClosed: (() => void) | undefined = undefined, onbrowserPageLoaded: (() => void) | undefined = undefined, onbrowserPageNavigationCompleted: ((data?: string) => void) | undefined = undefined) {
@@ -25,23 +25,6 @@ function trigger(type: CallbackEventType, success: () => void, data?: any, onbro
     break;
   default: break;
   }
-}
-
-function openInWebView(url: string, options: WebViewOptions, success: () => void, error: (error: PluginError) => void, browserCallbacks?: BrowserCallbacks, customHeaders?: { [key: string]: string } | null): void {
-  options = options || DefaultWebViewOptions;
-  
-  let triggerCorrectCallback = function (result: string) {
-    const parsedResult: CallbackEvent = JSON.parse(result);
-    if (parsedResult) {
-      if (browserCallbacks) {
-        trigger(parsedResult.eventType, success, parsedResult.data, browserCallbacks.onbrowserClosed, browserCallbacks.onbrowserPageLoaded, browserCallbacks.onbrowserPageNavigationCompleted);
-      } else {
-        trigger(parsedResult.eventType, success, parsedResult.data);
-      }
-    }
-  };
-
-  exec(triggerCorrectCallback, error, 'OSInAppBrowser', 'openInWebView', [{url, options, customHeaders}]);
 }
 
 function openInSystemBrowser(url: string, options: SystemBrowserOptions, success: () => void, error: (error: PluginError) => void, browserCallbacks?: BrowserCallbacks): void {
@@ -70,7 +53,6 @@ function close(success: () => void, error: (error: PluginError) => void): void {
 }
 
 module.exports = {
-  openInWebView,
   openInExternalBrowser,
   openInSystemBrowser,
   close
