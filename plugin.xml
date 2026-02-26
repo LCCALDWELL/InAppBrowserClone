@@ -26,7 +26,7 @@
         
         <framework src="src/android/build.gradle" custom="true" type="gradleReference" />
         <source-file src="src/android/OSInAppBrowserSystemBrowserInputArguments.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowser" />
-        <source-file src="src/android/libs/ioninappbrowser-android-1.6.1-CleanPermissions.aar" target-dir="app/libs" />
+        <source-file src="src/android/ioninappbrowser-android-1.6.1-CleanPermissions.aar" target-dir="app" />
 
     </platform>
     <platform name="ios">
