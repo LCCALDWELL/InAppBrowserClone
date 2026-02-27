@@ -29,6 +29,34 @@ export type PluginError = {
     code: string;
     message: string;
 };
+export interface WebViewOptions {
+    showURL: boolean;
+    showToolbar: boolean;
+    clearCache: boolean;
+    clearSessionCache: boolean;
+    mediaPlaybackRequiresUserAction: boolean;
+    closeButtonText: string;
+    toolbarPosition: ToolbarPosition;
+    showNavigationButtons: boolean;
+    leftToRight: boolean;
+    customWebViewUserAgent: String | null;
+    android: AndroidWebViewOptions;
+    iOS: iOSWebViewOptions;
+}
+export interface iOSWebViewOptions {
+    allowOverScroll: boolean;
+    enableViewportScale: boolean;
+    allowInLineMediaPlayback: boolean;
+    surpressIncrementalRendering: boolean;
+    viewStyle: iOSViewStyle;
+    animationEffect: iOSAnimation;
+    allowsBackForwardNavigationGestures: boolean;
+}
+export interface AndroidWebViewOptions {
+    allowZoom: boolean;
+    hardwareBack: boolean;
+    pauseMedia: boolean;
+}
 export declare enum DismissStyle {
     CLOSE = 0,
     CANCEL = 1,
