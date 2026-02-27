@@ -41,6 +41,34 @@ var CallbackEventType = /* @__PURE__ */ ((CallbackEventType2) => {
   CallbackEventType2[CallbackEventType2["PAGE_NAVIGATION_COMPLETED"] = 4] = "PAGE_NAVIGATION_COMPLETED";
   return CallbackEventType2;
 })(CallbackEventType || {});
+const DefaultAndroidWebViewOptions = {
+  allowZoom: false,
+  hardwareBack: true,
+  pauseMedia: true
+};
+const DefaultiOSWebViewOptions = {
+  allowOverScroll: true,
+  enableViewportScale: false,
+  allowInLineMediaPlayback: false,
+  surpressIncrementalRendering: false,
+  viewStyle: iOSViewStyle.FULL_SCREEN,
+  animationEffect: iOSAnimation.COVER_VERTICAL,
+  allowsBackForwardNavigationGestures: true
+};
+const DefaultWebViewOptions = {
+  showToolbar: true,
+  showURL: true,
+  clearCache: true,
+  clearSessionCache: true,
+  mediaPlaybackRequiresUserAction: false,
+  closeButtonText: "Close",
+  toolbarPosition: ToolbarPosition.TOP,
+  showNavigationButtons: true,
+  leftToRight: false,
+  android: DefaultAndroidWebViewOptions,
+  iOS: DefaultiOSWebViewOptions,
+  customWebViewUserAgent: null
+};
 const DefaultiOSSystemBrowserOptions = {
   closeButtonText: DismissStyle.DONE,
   viewStyle: iOSViewStyle.FULL_SCREEN,
@@ -82,6 +110,20 @@ function trigger(type, success, data, onbrowserClosed = void 0, onbrowserPageLoa
       break;
   }
 }
+function openInWebView(url, options, success, error, browserCallbacks, customHeaders) {
+  options = options || DefaultWebViewOptions;
+  let triggerCorrectCallback = function(result) {
+    const parsedResult = JSON.parse(result);
+    if (parsedResult) {
+      if (browserCallbacks) {
+        trigger(parsedResult.eventType, success, parsedResult.data, browserCallbacks.onbrowserClosed, browserCallbacks.onbrowserPageLoaded, browserCallbacks.onbrowserPageNavigationCompleted);
+      } else {
+        trigger(parsedResult.eventType, success, parsedResult.data);
+      }
+    }
+  };
+  exec(triggerCorrectCallback, error, "OSInAppBrowser", "openInWebView", [{ url, options, customHeaders }]);
+}
 function openInSystemBrowser(url, options, success, error, browserCallbacks) {
   options = options || DefaultSystemBrowserOptions;
   let triggerCorrectCallback = function(result) {
@@ -103,6 +145,7 @@ function close(success, error) {
   exec(success, error, "OSInAppBrowser", "close", [{}]);
 }
 module.exports = {
+  openInWebView,
   openInExternalBrowser,
   openInSystemBrowser,
   close
