@@ -10,11 +10,14 @@ import com.outsystems.plugins.inappbrowser.osinappbrowserlib.OSIABRouter
 import com.outsystems.plugins.inappbrowser.osinappbrowserlib.helpers.OSIABFlowHelper
 import com.outsystems.plugins.inappbrowser.osinappbrowserlib.models.OSIABToolbarPosition
 import com.outsystems.plugins.inappbrowser.osinappbrowserlib.models.OSIABViewStyle
+import com.outsystems.plugins.inappbrowser.osinappbrowserlib.models.OSIABWebViewOptions
 import com.outsystems.plugins.inappbrowser.osinappbrowserlib.routeradapters.OSIABCustomTabsRouterAdapter
 import com.outsystems.plugins.inappbrowser.osinappbrowserlib.routeradapters.OSIABExternalBrowserRouterAdapter
+import com.outsystems.plugins.inappbrowser.osinappbrowserlib.routeradapters.OSIABWebViewRouterAdapter
 import org.apache.cordova.CallbackContext
 import org.apache.cordova.CordovaInterface
 import org.apache.cordova.CordovaPlugin
+import org.apache.cordova.CordovaWebView
 import org.apache.cordova.PluginResult
 import org.json.JSONArray
 import org.json.JSONObject
@@ -24,10 +27,10 @@ class OSInAppBrowser: CordovaPlugin() {
     private var activeRouter: OSIABRouter<Boolean>? = null
     private val gson by lazy { Gson() }
 
-/*    override fun initialize(cordova: CordovaInterface) {
-        super.initialize(cordova)
+    override fun initialize(cordova: CordovaInterface, webView: CordovaWebView) {
+        super.initialize(cordova, webView)
         this.engine = OSIABEngine()
-    }*/
+    }
 
     override fun execute(
         action: String,
@@ -40,6 +43,9 @@ class OSInAppBrowser: CordovaPlugin() {
             }
             "openInSystemBrowser" -> {
                 openInSystemBrowser(args, callbackContext)
+            }
+            "openInWebView" -> {
+                openInWebView(args, callbackContext)
             }
             "close" -> {
                 close(callbackContext)
@@ -132,12 +138,79 @@ class OSInAppBrowser: CordovaPlugin() {
         }
     }
 
- /**
+    /**
+     * Calls the openWebView method of OSIABEngine to open the url in a WebView
+     * @param args JSONArray that contains the parameters to parse (e.g. url to open)
+     * @param callbackContext CallbackContext the method should return to
+     */
+    private fun openInWebView(args: JSONArray, callbackContext: CallbackContext) {
+        val url: String?
+        val webViewOptions: OSIABWebViewOptions?
+        var customHeaders: Map<String, String>? = null
+
+        try {
+            val argumentsDictionary = args.getJSONObject(0)
+            url = argumentsDictionary.getString("url")
+            if(url.isNullOrEmpty()) throw IllegalArgumentException()
+            webViewOptions = buildWebViewOptions(argumentsDictionary.optString("options", "{}"))
+            if (argumentsDictionary.has("customHeaders")) {
+                customHeaders = argumentsDictionary.getJSONObject("customHeaders").let { jsObject ->
+                    val result = mutableMapOf<String, String>()
+                    jsObject.keys().forEach { key ->
+                        when (val value = jsObject.opt(key)) {
+                            is String -> result[key] = value
+                            is Number -> result[key] = value.toString()
+                        }
+                    }
+                    result
+                }
+            }
+        }
+        catch (e: Exception) {
+            sendError(callbackContext, OSInAppBrowserError.InputArgumentsIssue(OSInAppBrowserTarget.WEB_VIEW))
+            return
+        }
+
+        try {
+            close {
+                val webViewRouter = OSIABWebViewRouterAdapter(
+                    context = cordova.context,
+                    lifecycleScope = cordova.activity.lifecycleScope,
+                    options = webViewOptions,
+                    customHeaders = customHeaders,
+                    flowHelper = OSIABFlowHelper(),
+                    onBrowserPageLoaded = {
+                        sendSuccess(callbackContext, OSIABEventType.BROWSER_PAGE_LOADED)
+                    },
+                    onBrowserFinished = {
+                        sendSuccess(callbackContext, OSIABEventType.BROWSER_FINISHED)
+                    },
+                    onBrowserPageNavigationCompleted = { data ->
+                        sendSuccess(callbackContext, OSIABEventType.BROWSER_PAGE_NAVIGATION_COMPLETED, data)
+                    }
+                )
+
+                engine?.openWebView(webViewRouter, url) { success ->
+                    if (success) {
+                        activeRouter = webViewRouter
+                        sendSuccess(callbackContext, OSIABEventType.SUCCESS)
+                    } else {
+                        sendError(callbackContext, OSInAppBrowserError.OpenFailed(url, OSInAppBrowserTarget.WEB_VIEW))
+                    }
+                }
+            }
+        }
+        catch (e: Exception) {
+            sendError(callbackContext, OSInAppBrowserError.OpenFailed(url, OSInAppBrowserTarget.WEB_VIEW))
+        }
+    }
+
+    /**
      * Calls the close method of OSIABEngine to close the currently opened view
      * @param callbackContext CallbackContext the method should return to
      */
     private fun close(callbackContext: CallbackContext) {
-        close { success: Boolean ->
+        close { success ->
             if (success) {
                 sendSuccess(callbackContext, OSIABEventType.SUCCESS)
             } else {
@@ -148,7 +221,7 @@ class OSInAppBrowser: CordovaPlugin() {
 
     private fun close(callback: (Boolean) -> Unit) {
         (activeRouter as? OSIABClosable)?.let { closableRouter ->
-            closableRouter.close { success: Boolean   ->
+            closableRouter.close { success ->
                 if (success) {
                     activeRouter = null
                 }
@@ -175,6 +248,30 @@ class OSInAppBrowser: CordovaPlugin() {
         }
     }
 
+    /**
+     * Parses options that come in JSON to a 'OSInAppBrowserWebViewInputArguments'.
+     * Then, it uses the newly created object to create a 'OSIABWebViewOptions' object.
+     * @param options The options to open the URL in a WebView, in a JSON string.
+     */
+    private fun buildWebViewOptions(options: String): OSIABWebViewOptions {
+        return gson.fromJson(options, OSInAppBrowserWebViewInputArguments::class.java).let {
+            OSIABWebViewOptions(
+                it.showURL ?: true,
+                it.showToolbar ?: true,
+                it.clearCache ?: true,
+                it.clearSessionCache ?: true,
+                it.mediaPlaybackRequiresUserAction ?: false,
+                it.closeButtonText ?: "Close",
+                it.toolbarPosition ?: OSIABToolbarPosition.TOP,
+                it.leftToRight ?: false,
+                it.showNavigationButtons ?: true,
+                it.android.allowZoom ?: true,
+                it.android.hardwareBack ?: true,
+                it.android.pauseMedia ?: true,
+                it.customWebViewUserAgent
+            )
+        }
+    }
 
     /**
      * Helper method to send a success result
