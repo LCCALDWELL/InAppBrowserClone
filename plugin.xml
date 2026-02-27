@@ -21,7 +21,7 @@
         </config-file>
         
         <config-file parent="/*" target="AndroidManifest.xml" />
-        <source-file src="src/android/ioninappbrowser-android-1.6.1-CleanPermissions.aar" target-dir="app/libs" />
+        <source-file src="src/android/ioninappbrowser-android-1.6.1-CleanPermissions-V2.aar" target-dir="app/libs" />
         <source-file src="src/android/OSInAppBrowser.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowser" />
         <source-file src="src/android/OSInAppBrowserError.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowser" />
         
